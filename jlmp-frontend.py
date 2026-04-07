@@ -84,13 +84,28 @@ def remove_book():
     submit_button = tk.Button(remove_book_dialog, text="Submit", command=submit_remove)
     submit_button.grid(column=0,row=2,padx=5,pady=5)
 
+def settings():
+    settings_dialog = tk.Toplevel(root)
+    settings_dialog.title("Settings")
+    settings_dialog.geometry("300x300")
+    label_barcode = tk.Label(settings_dialog, text="Barcode Length:")
+    barcode_note = None # Add
+    label_barcode.grid(column=0,row=0,padx=5,pady=5)
+    entry_barcode = tk.Entry(settings_dialog)
+    entry_barcode.grid(column=1,row=0,padx=5,pady=5)
+    barcode_note.grid(column=0,row=1,padx=5,pady=5,columnspan=2,sticky="w")
+    label_loan_period = tk.Label(settings_dialog, text="Loan Period (days):")
+    label_loan_period.grid(column=0,row=2,padx=5,pady=5)
+    entry_loan_period = tk.Entry(settings_dialog)
+    entry_loan_period.grid(column=1,row=2,padx=5,pady=5)
+
 book_add_button = tk.Button(root, text="Add Book", command=lambda: add_book())
 book_add_button.grid(column=0,row=0,padx=10,pady=10,sticky="w")
 
 book_remove_button = tk.Button(root, text="Remove Book", command=lambda: remove_book())
 book_remove_button.grid(column=0,row=1,padx=10,pady=10,sticky="w")
 
-settings_button = tk.Button(root, text="Settings", command=lambda: print("Settings"))
+settings_button = tk.Button(root, text="Settings", command=lambda: settings())
 settings_button.grid(column=2,row=0,padx=10,pady=10,sticky="e")
 
 manage_patron_button = tk.Button(root, text="Manage Patron", command=lambda: print("Manage Patron"))
