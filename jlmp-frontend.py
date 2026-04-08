@@ -173,10 +173,43 @@ def manage_patron():
     submit_button.grid(columnspan=2,row=1,padx=5,pady=5)
     def submit_card_number(card_number):
         patron_number = card_number
+        try:
+            patron_info = JLMP.patron.get_info(patron_number)
+        except:
+            alert_dialog = tk.Toplevel(card_number_dialog)
+            alert_dialog.title("Error")
+            alert_dialog.geometry("200x100")
+            alert_label = tk.Label(alert_dialog, text="Patron not found!")
+            alert_label.pack(padx=10,pady=10)
+            ok_button = tk.Button(alert_dialog, text="OK", command=alert_dialog.destroy)
+            ok_button.pack(padx=10,pady=10)
+            return
         card_number_dialog.destroy()
         patron_dialog = tk.Toplevel(root)
         patron_dialog.title("Manage Patron")
         patron_dialog.geometry("300x300")
+
+def add_patron():
+    add_patron_dialog = tk.Toplevel(root)
+    add_patron_dialog.title("Add Patron")
+    add_patron_dialog.geometry("300x300")
+    label_name = tk.Label(add_patron_dialog, text="Name:")
+    label_name.grid(column=0,row=0,padx=10,pady=5)
+    entry_name = tk.Entry(add_patron_dialog)
+    entry_name.grid(column=1,row=0,padx=10,pady=5)
+    label_email = tk.Label(add_patron_dialog, text="Email:")
+    label_email.grid(column=0,row=1,padx=10,pady=5)
+    entry_email = tk.Entry(add_patron_dialog)
+    entry_email.grid(column=1,row=1,padx=10,pady=5)
+    label_phone = tk.Label(add_patron_dialog,text="Phone No.:")
+    label_phone.grid(column=0,row=2,padx=10,pady=5)
+    entry_phone = tk.Entry(add_patron_dialog)
+    entry_phone.grid(column=1,row=2,padx=10,pady=5)
+    label_notes = tk.Label(add_patron_dialog,text="Notes:")
+    label_notes.grid(column=0,row=3,padx=10,pady=5,sticky="n")
+    entry_notes = tk.Text(add_patron_dialog,height=5,width=20)
+    entry_notes.grid(column=1,row=3,padx=10,pady=5,sticky="n")
+    
 
 book_add_button = tk.Button(root, text="Add Book", command=lambda: add_book())
 book_add_button.grid(column=0,row=0,padx=10,pady=10,sticky="ew")
@@ -190,7 +223,7 @@ settings_button.grid(column=2,row=0,padx=10,pady=10,sticky="ew",ipadx=7)
 manage_patron_button = tk.Button(root, text="Manage Patron", command=lambda: manage_patron())
 manage_patron_button.grid(column=1,row=1,padx=10,pady=10,sticky="ew")
 
-add_patron_button = tk.Button(root, text="Add Patron", command=lambda: print("Add Patron"))
+add_patron_button = tk.Button(root, text="Add Patron", command=lambda:add_patron())
 add_patron_button.grid(column=1,row=0,padx=10,pady=10,sticky="ew")
 
 renew_loan_button = tk.Button(root,text="Renew Loan",command=lambda:print("Renew Loan"))
