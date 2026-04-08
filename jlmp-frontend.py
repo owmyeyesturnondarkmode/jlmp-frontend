@@ -19,10 +19,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 import tkinter as tk
 import JLMP
+import os
+from xml.etree import ElementTree as ET
 
 root = tk.Tk()
 root.title("JLMP")
 root.geometry("400x300")
+if os.path.exists(os.path.expanduser("~/.local/share/jlmp-frontend/init")):
+    with open(os.path.expanduser("~/.local/share/jlmp-frontend/config.ini"),"r") as f:
+        config = f.read().splitlines()
+    JLMP.homedir = config[0]
+else:
+    config = []
 
 def add_book():
     add_book_dialog = tk.Toplevel(root)
@@ -82,22 +90,71 @@ def remove_book():
             JLMP.remove_book(barcode)
             remove_book_dialog.destroy()
     submit_button = tk.Button(remove_book_dialog, text="Submit", command=submit_remove)
-    submit_button.grid(column=0,row=2,padx=5,pady=5)
+    submit_button.grid(column=0,row=2,padx=5,pady=5,sticky="w")
+    cancel_button = tk.Button(remove_book_dialog, text="Cancel", command=remove_book_dialog.destroy)
+    cancel_button.grid(column=1,row=2,padx=5,pady=5,sticky="e")
 
 def settings():
     settings_dialog = tk.Toplevel(root)
     settings_dialog.title("Settings")
-    settings_dialog.geometry("300x300")
+    settings_dialog.geometry("325x300")
+    label_library_directory = tk.Label(settings_dialog,text="Library Directory:")
+    label_library_directory.grid(column=0,row=0,padx=5,pady=5)
+    entry_library_directory = tk.Entry(settings_dialog,state="normal" if not os.path.exists(os.path.expanduser("~/.local/share/jlmp-frontend/init")) else "disabled")
+    entry_library_directory.grid(column=1,row=0,padx=5,pady=5)
     label_barcode = tk.Label(settings_dialog, text="Barcode Length:")
-    barcode_note = None # Add
-    label_barcode.grid(column=0,row=0,padx=5,pady=5)
-    entry_barcode = tk.Entry(settings_dialog)
-    entry_barcode.grid(column=1,row=0,padx=5,pady=5)
-    barcode_note.grid(column=0,row=1,padx=5,pady=5,columnspan=2,sticky="w")
+    barcode_note = tk.Label(settings_dialog, text="         Barcode length and directory can ONLY be set before init",fg="red",font=("Arial",8))
+    label_barcode.grid(column=0,row=1,padx=5,pady=5,sticky="w")
+    entry_barcode = tk.Entry(settings_dialog,state="normal" if not os.path.exists(os.path.expanduser("~/.local/share/jlmp-frontend/init")) else "disabled")
+    entry_barcode.grid(column=1,row=1,padx=5,pady=5)
+    barcode_note.grid(column=0,row=2,padx=5,pady=5,columnspan=2,sticky="w")
     label_loan_period = tk.Label(settings_dialog, text="Loan Period (days):")
-    label_loan_period.grid(column=0,row=2,padx=5,pady=5)
+    label_loan_period.grid(column=0,row=3,padx=5,pady=5)
     entry_loan_period = tk.Entry(settings_dialog)
-    entry_loan_period.grid(column=1,row=2,padx=5,pady=5)
+    entry_loan_period.grid(column=1,row=3,padx=5,pady=5)
+    init_button = tk.Button(settings_dialog, text="Init", command=lambda: jlmpinit(entry_barcode.get(), entry_loan_period.get()),state="normal" if not os.path.exists(os.path.expanduser("~/.local/share/jlmp-frontend/init")) else "disabled")
+    init_button.grid(column=0,row=4,padx=5,pady=10,sticky="w")
+    save_button = tk.Button(settings_dialog, text="Save", command=lambda: savesettings(entry_loan_period.get()))
+    save_button.grid(column=0,row=5,padx=5,pady=5,ipady=10)
+    cancel_button = tk.Button(settings_dialog, text="Cancel", command=settings_dialog.destroy)
+    cancel_button.grid(column=1,row=5,padx=5,pady=5,ipady=10)
+    def jlmpinit(barcode_length, loan_period):
+        data_dir = os.path.expanduser("~/.local/share/jlmp-frontend")
+        if entry_barcode.get() != "" and entry_loan_period.get() != "" and entry_library_directory.get() != "":
+            os.makedirs(data_dir, exist_ok=True)
+            os.system(f"touch {data_dir}/init")
+            os.system(f"touch {data_dir}/config.ini")
+            with open(f"{data_dir}/config.ini","w") as f:
+                f.write(entry_library_directory.get())
+            JLMP.homedir = os.path.expanduser(entry_library_directory.get())
+            if not os.path.exists(f"{JLMP.homedir}"):
+                os.makedirs(f"{JLMP.homedir}")
+            JLMP.Library.init(barcode_length, loan_period)
+            settings_dialog.destroy()
+        else:
+            alert_dialog = tk.Toplevel(settings_dialog)
+            alert_dialog.title("Error")
+            alert_dialog.geometry("200x100")
+            alert_label = tk.Label(alert_dialog, text="All fields must be filled out!")
+            alert_label.pack(padx=10,pady=10)
+            ok_button = tk.Button(alert_dialog, text="OK", command=alert_dialog.destroy)
+            ok_button.pack(padx=10,pady=10)
+    def savesettings(loan_period):
+        if entry_loan_period.get() != "":
+            with open(f"{JLMP.homedir}settings.xml", "r") as f:
+                    settings_tree = ET.parse(f)
+                    settings_root = settings_tree.getroot()
+            settings_root.find("loan_period").text = loan_period
+            settings_tree.write(f"{JLMP.homedir}settings.xml")
+            settings_dialog.destroy()
+        else:
+            alert_dialog = tk.Toplevel(settings_dialog)
+            alert_dialog.title("Error")
+            alert_dialog.geometry("200x100")
+            alert_label = tk.Label(alert_dialog, text="Loan period must be filled out!")
+            alert_label.pack(padx=10,pady=10)
+            ok_button = tk.Button(alert_dialog, text="OK", command=alert_dialog.destroy)
+            ok_button.pack(padx=10,pady=10)
 
 book_add_button = tk.Button(root, text="Add Book", command=lambda: add_book())
 book_add_button.grid(column=0,row=0,padx=10,pady=10,sticky="w")
