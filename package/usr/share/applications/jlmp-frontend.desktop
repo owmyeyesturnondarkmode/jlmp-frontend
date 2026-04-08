@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=JLMP
+Comment=A library managment and catalog software
+Exec=/usr/bin/jlmp-fontend.py
+Icon=jlmp
+Terminal=false
+Type=Application
+Categories=Utility;
