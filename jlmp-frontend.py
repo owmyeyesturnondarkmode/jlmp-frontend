@@ -28,8 +28,9 @@ root.geometry("400x300")
 if os.path.exists(os.path.expanduser("~/.local/share/jlmp-frontend/init")):
     with open(os.path.expanduser("~/.local/share/jlmp-frontend/config.ini"),"r") as f:
         config = f.read().splitlines()
-    JLMP.homedir = config[0]
+    JLMP.homedir = os.path.expanduser(config[0])
 else:
+    
     config = []
 
 def add_book():
@@ -188,6 +189,19 @@ def manage_patron():
         patron_dialog = tk.Toplevel(root)
         patron_dialog.title("Manage Patron")
         patron_dialog.geometry("300x300")
+        label_name = tk.Label(patron_dialog,text=f"Name: {patron_info[0]}")
+        label_name.grid(columnspan=2,row=0,padx=10,pady=5)
+        label_email = tk.Label(patron_dialog,text=f"Email: {patron_info[1]}")
+        label_email.grid(columnspan=2,row=1,padx=10,pady=5)
+        label_phone = tk.Label(patron_dialog,text=f"Phone: {patron_info[2]}")
+        label_phone.grid(columnspan=2,row=2,padx=10,pady=5)
+        label_notes = tk.Label(patron_dialog,text=f"Notes: {patron_info[3]}")
+        label_notes.grid(columnspan=2,row=3,padx=10,pady=5)
+        label_card_number = tk.Label(patron_dialog,text=f"Card Number: {card_number}")
+        label_card_number.grid(columnspan=2,row=4,padx=10,pady=5)
+        loans_button = tk.Button(patron_dialog,text="View Loans",command=lambda:veiw_loans(card_number))
+        loans_button.grid(column=0,row=5,padx=10,pady=5)
+
 
 def add_patron():
     add_patron_dialog = tk.Toplevel(root)
@@ -209,7 +223,17 @@ def add_patron():
     label_notes.grid(column=0,row=3,padx=10,pady=5,sticky="n")
     entry_notes = tk.Text(add_patron_dialog,height=5,width=20)
     entry_notes.grid(column=1,row=3,padx=10,pady=5,sticky="n")
-    
+    label_card_number = tk.Label(add_patron_dialog,text="Card Number:")
+    label_card_number.grid(column=0,row=4,padx=10,pady=5)
+    entry_card_number = tk.Entry(add_patron_dialog)
+    entry_card_number.grid(column=1,row=4,padx=10,pady=5)
+    submit_button = tk.Button(add_patron_dialog,text="Submit",command=lambda: submit_patron(entry_name.get(), entry_email.get(), entry_phone.get(), entry_notes.get("1.0","end-1c"), entry_card_number.get()))
+    submit_button.grid(column=0,row=5,padx=5,pady=10,sticky="w")
+    cancel_button = tk.Button(add_patron_dialog,text="Cancel",command=add_patron_dialog.destroy)
+    cancel_button.grid(column=1,row=5,padx=5,pady=10,sticky="e")
+    def submit_patron(name, email, phone, notes, card_number):
+        JLMP.patron.add(card_number, name, email, phone, notes)
+        add_patron_dialog.destroy()
 
 book_add_button = tk.Button(root, text="Add Book", command=lambda: add_book())
 book_add_button.grid(column=0,row=0,padx=10,pady=10,sticky="ew")
