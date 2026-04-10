@@ -25,7 +25,7 @@ from xml.etree import ElementTree as ET
 root = tk.Tk()
 root.resizable(False, False)
 root.title("JLMP")
-root.geometry("440x300")
+root.geometry("442x300")
 if os.path.exists(os.path.expanduser("~/.local/share/jlmp-frontend/init")):
     with open(os.path.expanduser("~/.local/share/jlmp-frontend/config.ini"),"r") as f:
         config = f.read().splitlines()
@@ -387,21 +387,30 @@ search_button = tk.Button(root,text="Search",command=lambda:search())
 search_button.grid(column=2,row=1,padx=10,pady=10,sticky="ew")
 
 checknew_loan_button = tk.Button(root,text="Check Out/Renew",command=lambda:checknew(entry_barcode.get(),entry_card_no.get()))
-checknew_loan_button.grid(column=2,row=2,padx=10,pady=10,sticky="sew")
+checknew_loan_button.grid(column=2,row=3,padx=10,pady=10,sticky="sew")
 
 check_in_button = tk.Button(root,text="Check In",command=lambda: check_in(entry_barcode.get()))
-check_in_button.grid(column=2,row=3,pady=10,padx=10,sticky="ew")
+check_in_button.grid(column=2,row=4,pady=10,padx=10,sticky="ew")
 
 label_barcode = tk.Label(root,text="Barcode:")
-label_barcode.grid(column=0,row=2,pady=10,padx=10,sticky="s")
+label_barcode.grid(column=0,row=3,pady=10,padx=10)
 entry_barcode = tk.Entry(root,width=10)
-entry_barcode.grid(column=1,row=2,padx=10,pady=10,sticky="sew")
+entry_barcode.grid(column=1,row=3,padx=10,pady=10,sticky="ew")
 
 label_card_no = tk.Label(root,text="Patron Card No.:")
-label_card_no.grid(column=0,row=3,pady=10,padx=10)
+label_card_no.grid(column=0,row=4,pady=10,padx=10)
 entry_card_no = tk.Entry(root,width=10)
-entry_card_no.grid(column=1,row=3,padx=10,pady=10,sticky="ew")
+entry_card_no.grid(column=1,row=4,padx=10,pady=10,sticky="ew")
 
-label_card_number = tk.Label
+banner_path = os.path.join(os.path.dirname(__file__), "package", "usr", "lib", "jlmp", "banner.png")
+if os.path.exists(banner_path):
+    image_banner = tk.PhotoImage(file=banner_path)
+    banner_label = tk.Label(root, image=image_banner)
+    banner_label.image = image_banner
+    banner_label.grid(column=0, row=2, columnspan=3, pady=5)
+else:
+    banner_label = tk.Label(root, text="Banner image not found")
+    banner_label.grid(column=0, row=2, columnspan=3, padx=10, pady=5)
+
 
 root.mainloop()
