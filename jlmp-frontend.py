@@ -23,8 +23,9 @@ import os
 from xml.etree import ElementTree as ET
 
 root = tk.Tk()
+root.resizable(False, False)
 root.title("JLMP")
-root.geometry("400x300")
+root.geometry("440x300")
 if os.path.exists(os.path.expanduser("~/.local/share/jlmp-frontend/init")):
     with open(os.path.expanduser("~/.local/share/jlmp-frontend/config.ini"),"r") as f:
         config = f.read().splitlines()
@@ -64,7 +65,7 @@ def add_book():
         title = entry_title.get()
         author = entry_author.get()
         genre = entry_genre.get()
-        fiction = fiction_var.get()
+        fiction = str(fiction_var.get())
         year = entry_year.get()
         isbn = entry_isbn.get()
         JLMP.book.add(title, author, genre, fiction, year, isbn)
@@ -171,7 +172,9 @@ def manage_patron():
     entry_card_number = tk.Entry(card_number_dialog)
     entry_card_number.grid(column=1,row=0,padx=5,pady=5)
     submit_button = tk.Button(card_number_dialog, text="Submit",command=lambda: submit_card_number(entry_card_number.get()))
-    submit_button.grid(columnspan=2,row=1,padx=5,pady=5)
+    submit_button.grid(columnspan=2,row=1,padx=5,pady=5,sticky="w")
+    cancel_button = tk.Button(card_number_dialog,text="Cancel",command=card_number_dialog.destroy)
+    cancel_button.grid(columnspan=2,row=1,padx=5,pady=5,sticky="e")
     def submit_card_number(card_number):
         patron_number = card_number
         try:
@@ -188,7 +191,7 @@ def manage_patron():
         card_number_dialog.destroy()
         patron_dialog = tk.Toplevel(root)
         patron_dialog.title("Manage Patron")
-        patron_dialog.geometry("300x300")
+        patron_dialog.geometry("260x260")
         label_name = tk.Label(patron_dialog,text="Name: " + patron_info[0])
         label_name.grid(columnspan=2,row=0,padx=10,pady=5)
         label_email = tk.Label(patron_dialog,text="Email: " + patron_info[1])
@@ -203,14 +206,29 @@ def manage_patron():
         loans_button.grid(column=0,row=5,padx=10,pady=5)
         delete_button = tk.Button(patron_dialog,text="Delete Patron",fg="red",command=lambda: delete_patron(card_number))
         delete_button.grid(column=1,row=5,padx=10,pady=5)
+        close_button = tk.Button(patron_dialog,text="Close",command=patron_dialog.destroy)
+        close_button.grid(columnspan=2,row=6,padx=10,pady=10)
         def veiw_loans(card_number):
             loans_dialog = tk.Toplevel(patron_dialog)
             loans_dialog.title("Loans")
             loans_dialog.geometry("400x300")
             barcodes = JLMP.patron.list_loans(card_number)
-            for barcode in barcodes:
-                book_info = JLMP.book.get_info(barcode)
-                formated_info = f"{book_info[0]}: {book_info[1]} by {book_info[3]} - Due"
+            for loan in barcodes:
+                book_info = JLMP.book.get_info(loan[0])
+                formated_info = f"{book_info[0]}: {book_info[1]} by {book_info[3]} - Due {loan[1]}, Renewed {loan[2]} times"
+                label_loan = tk.Label(loans_dialog, text=formated_info)
+                label_loan.pack(padx=10,pady=5,anchor="w")
+            close_button = tk.Button(loans_dialog, text="Close",command=loans_dialog.destroy)
+        def delete_patron(card_number):
+            confirm_dialog = tk.Toplevel(patron_dialog)
+            confirm_dialog.title("Confirm Delete")
+            confirm_dialog.geometry("300x100")
+            label_confirm = tk.Label(confirm_dialog, text="Are you sure you want to delete this patron?")
+            label_confirm.pack(padx=10,pady=10)
+            ok_button = tk.Button(confirm_dialog, text="OK", command=lambda: [confirm_dialog.destroy(), JLMP.patron.remove(card_number),patron_dialog.destroy()],fg="red")
+            ok_button.pack(ipadx=10,padx=10,pady=10,side="left")
+            cancel_button = tk.Button(confirm_dialog, text="Cancel", command=confirm_dialog.destroy)
+            cancel_button.pack(padx=10,pady=5,side="right")
 
 def add_patron():
     add_patron_dialog = tk.Toplevel(root)
@@ -244,8 +262,74 @@ def add_patron():
         JLMP.patron.add(card_number, name, email, phone, notes)
         add_patron_dialog.destroy()
 
+def search():
+    search_dialog = tk.Toplevel(root)
+    search_dialog.title("Search")
+    search_dialog.geometry("300x150")
+    type_dropdown_label = tk.Label(search_dialog, text="Search Type:")
+    type_dropdown_label.grid(column=0,row=0,padx=10,pady=5)
+    search_type_var = tk.StringVar()
+    type_dropdown = tk.OptionMenu(search_dialog, search_type_var, "Choose One", "Title", "Author", "Genre", "ISBN","Year")
+    search_type_var.set("Choose One")
+    type_dropdown.grid(column=1,row=0,padx=10,pady=5)
+    label_search = tk.Label(search_dialog, text="Search Query:")
+    label_search.grid(column=0,row=1,padx=10,pady=5)
+    entry_search = tk.Entry(search_dialog)
+    entry_search.grid(column=1,row=1,padx=10,pady=5)
+    submit_button = tk.Button(search_dialog,text="Submit",command=lambda: submit_search(search_type_var.get(), entry_search.get()))
+    submit_button.grid(columnspan=2,row=2,padx=10,pady=5,sticky="w")
+    cancel_button = tk.Button(search_dialog,text="Cancel",command=search_dialog.destroy)
+    cancel_button.grid(columnspan=2,row=2,padx=10,pady=5,sticky="e")
+    def submit_search(search_type, query):
+        if search_type == "Choose One":
+            alert_dialog = tk.Toplevel(search_dialog)
+            alert_dialog.title("Error")
+            alert_dialog.geometry("200x100")
+            alert_label = tk.Label(alert_dialog, text="Please select a search type!")
+            alert_label.pack(padx=10,pady=10)
+            ok_button = tk.Button(alert_dialog, text="OK", command=alert_dialog.destroy)
+            ok_button.pack(padx=10,pady=10)
+            return
+        search_dialog.destroy()
+        results_dialog = tk.Toplevel(root)
+        results_dialog.title("Search Results")
+        results_dialog.geometry("400x300")
+        results = JLMP.library.search(search_type.lower(),query)
+        result_canvas = tk.Canvas(results_dialog)
+        result_scrollbar = tk.Scrollbar(results_dialog, orient="vertical", command=result_canvas.yview)
+        result_frame = tk.Frame(result_canvas)
+        result_canvas.create_window((0,0),window=result_frame,anchor="nw")
+        result_canvas.configure(yscrollcommand=result_scrollbar.set)
+        result_frame.bind("<Configure>", lambda e: result_canvas.configure(scrollregion=result_canvas.bbox("all")))
+
+        def _on_mousewheel(event):
+            result_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        def _on_mousewheel_linux(event):
+            if event.num == 4:
+                result_canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                result_canvas.yview_scroll(1, "units")
+
+        result_canvas.bind("<MouseWheel>", _on_mousewheel)
+        result_canvas.bind("<Button-4>", _on_mousewheel_linux)
+        result_canvas.bind("<Button-5>", _on_mousewheel_linux)
+
+        result_canvas.pack(side="left", fill="both", expand=True)
+        result_scrollbar.pack(side="right", fill="y")
+        for result in results:
+            formatted_result = f"""{result[1]}:
+    Author: {result[5]}
+    Genre: {result[2]}
+    Year: {result[4]}\n""" + (f"    Fiction\n" if result[3] == 'True' else "    Non-Fiction\n")
+            label_result = tk.Label(result_frame, text=formatted_result, justify="left", anchor="w")
+            label_result.pack(padx=10,pady=5,anchor="w")
+
+
+root.grid_rowconfigure(2,weight=1)
+
 book_add_button = tk.Button(root, text="Add Book", command=lambda: add_book())
-book_add_button.grid(column=0,row=0,padx=10,pady=10,sticky="ew")
+book_add_button.grid(column=0,row=0,padx=10,pady=10,sticky="ew",ipadx=10)
 
 book_remove_button = tk.Button(root, text="Remove Book", command=lambda: remove_book())
 book_remove_button.grid(column=0,row=1,padx=10,pady=10,sticky="ew")
@@ -257,9 +341,12 @@ manage_patron_button = tk.Button(root, text="Manage Patron", command=lambda: man
 manage_patron_button.grid(column=1,row=1,padx=10,pady=10,sticky="ew")
 
 add_patron_button = tk.Button(root, text="Add Patron", command=lambda:add_patron())
-add_patron_button.grid(column=1,row=0,padx=10,pady=10,sticky="ew")
+add_patron_button.grid(column=1,row=0,padx=10,pady=10,sticky="ew",ipadx=10)
 
-renew_loan_button = tk.Button(root,text="Renew Loan",command=lambda:print("Renew Loan"))
-renew_loan_button.grid(column=2,row=1,padx=10,pady=10,sticky="ew")
+search_button = tk.Button(root,text="Search",command=lambda:search())
+search_button.grid(column=2,row=1,padx=10,pady=10,sticky="ew")
+
+checknew_loan_button = tk.Button(root,text="Check Out/Renew",command=lambda:checknew())
+checknew_loan_button.grid(column=2,row=2,padx=10,pady=10,sticky="sew")
 
 root.mainloop()
